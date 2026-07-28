@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#07050f" />
+    <title>Asteria - Collaborative Canvas (Cosmos Edition)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="#" aria-label="Asteria home">
+          <span class="brand-mark">✦</span>
+          <span>Asteria</span>
+        </a>
+        <div class="file-title">
+          <span class="status-dot"></span>
+          <input id="boardTitle" aria-label="Board title" value="Untitled constellation" />
+        </div>
+        <div class="top-actions">
+          <div class="avatars" id="collaboratorsAvatars" aria-label="Active collaborators">
+            <!-- Dynamic Collaborator Avatars -->
+            <span class="avatar violet">E</span>
+            <span class="avatar-count" id="avatarCount">+0</span>
+          </div>
+          <button class="button ghost" id="inviteBtn">Invite</button>
+          <button class="button primary" id="shareBtn">Share board <span>↗</span></button>
+        </div>
+      </header>
+
+      <section class="workspace">
+        <aside class="sidebar">
+          <div class="sidebar-heading">
+            <span>BOARD CONSTELLATIONS</span>
+            <button id="newBoard" aria-label="New board">+</button>
+          </div>
+          <nav class="board-list" id="boardList">
+            <!-- Dynamic Boards list will render here -->
+          </nav>
+          <div class="sidebar-bottom">
+            <div class="sync-card">
+              <span class="sync-icon">◌</span>
+              <div>
+                <strong id="syncLabel">Live sync</strong>
+                <small id="syncDetail">Waiting for peers</small>
+              </div>
+            </div>
+            <button class="profile">
+              <span class="avatar violet">E</span>
+              <div>
+                <strong>Eswar</strong>
+                <small>Celestial Workspace</small>
+              </div>
+              <span>⌄</span>
+            </button>
+          </div>
+        </aside>
+
+        <section class="canvas-area" id="canvasArea" tabindex="0">
+          <div class="toolbar" role="toolbar" aria-label="Canvas tools">
+            <button class="tool selected" data-tool="select" title="Select (V)">↖</button>
+            <button class="tool" data-tool="pen" title="Pen (P)">✎</button>
+            <button class="tool" data-tool="laser" title="Laser Pointer (L)">☄</button>
+            <button class="tool" data-tool="note" title="Sticky note (N)">▤</button>
+            <button class="tool" data-tool="shape" title="Constellation Shape (R)">▭</button>
+            <button class="tool" data-tool="connector" title="Smart Connection (C)">➔</button>
+            <button class="tool" id="uploadImageBtn" title="Insert Image (I)">🖼</button>
+            <input type="file" id="imageInput" accept="image/*" style="display:none;" />
+            <span class="divider"></span>
+            <label class="color-picker" title="Stroke colour">
+              <input id="color" type="color" value="#8b5cf6" />
+              <span class="color-indicator" id="colorIndicator" style="background-color: #8b5cf6;"></span>
+            </label>
+            <input class="range" id="width" aria-label="Stroke width" type="range" min="1" max="16" value="4" />
+          </div>
+          
+          <div id="stageWrap" class="stage-wrap">
+            <canvas id="board" aria-label="Collaborative drawing canvas"></canvas>
+            
+            <!-- Live Telemetry Diagnostics HUD -->
+            <div id="telemetryHUD" class="telemetry-hud">
+              <div>FPS: <span id="telemetryFPS">60</span></div>
+              <div>Nodes: <span id="telemetryCount">0</span></div>
+              <div>Payload: <span id="telemetrySize">0.0 KB</span></div>
+            </div>
+            
+            <!-- Floating Viewport Mini-Map -->
+            <div id="miniMapContainer" class="mini-map-container" title="Drag viewport rectangle to pan canvas">
+              <canvas id="miniMapCanvas"></canvas>
+            </div>
+            
+            <div class="canvas-hint" id="canvasHint">Click & drag to draw. Double-click sticky note to edit. Hold Space+Drag to Pan. Wheel to Zoom. Press / to chat.</div>
+          </div>
+          
+          <div class="canvas-controls">
+            <div class="zoom-control">
+              <button id="zoomOut">−</button>
+              <button id="zoomReset"><span id="zoomValue">100%</span></button>
+              <button id="zoomIn">+</button>
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <div class="zoom-control" style="align-items: center; display: flex;">
+                <select id="themeSelector" title="Switch Board Theme" style="background: transparent; border: 0; color: var(--text-secondary); font-size: 11px; padding: 0 8px; outline: none; cursor: pointer; font-family: var(--font-sans); font-weight: 600; height: 100%;">
+                  <option value="nebula" style="background: #0b0918; color: #fff;">🌌 Nebula</option>
+                  <option value="synthwave" style="background: #180918; color: #fff;">🌆 Synthwave</option>
+                  <option value="matrix" style="background: #091809; color: #fff;">💻 Matrix</option>
+                  <option value="blueprint" style="background: #091018; color: #fff;">📐 Blueprint</option>
+                </select>
+              </div>
+              <div class="sound-control">
+                <button id="soundToggle" title="Toggle Synthesized SFX">🔊</button>
+              </div>
+              <div class="history-control">
+                <button id="undo" title="Undo (Ctrl+Z)">↶</button>
+                <button id="redo" title="Redo (Ctrl+Shift+Z)">↷</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <aside class="inspector">
+          <div class="inspector-tabs" id="inspectorTabs">
+            <button class="tab active" data-tab="activity" id="tabActivity">Activity</button>
+            <button class="tab" data-tab="layers" id="tabLayers">Layers</button>
+            <button class="tab" data-tab="ai" id="tabAI">AI Assistant</button>
+          </div>
+          
+          <section class="activity" id="sectionActivity">
+            <div class="presence">
+              <div class="pulse"></div>
+              <div>
+                <strong id="presenceCount">You are creating solo</strong>
+                <p id="presenceText">Open this board in another tab or share it to collaborate.</p>
+              </div>
+            </div>
+            <div class="activity-title">
+              <span>RECENT ACTIVITY</span>
+              <button id="clearBoard">Clear board</button>
+            </div>
+            <ol id="activityList" class="activity-list"></ol>
+          </section>
+
+          <section class="layers-container" id="sectionLayers">
+            <!-- Layers list will render here -->
+          </section>
+
+          <section class="ai-container" id="sectionAI" style="display:none;">
+            <div class="ai-header">
+              <div class="ai-bot-avatar">✦</div>
+              <div>
+                <strong>Stellar AI</strong>
+                <small id="aiStatus">Online · Ready</small>
+              </div>
+            </div>
+            
+            <div class="ai-chat-history" id="aiChatHistory">
+              <div class="ai-msg bot">
+                Greetings! I am Asteria AI. I can generate brainstorm clusters, summarize notes, tidy elements, or listen to voice commands.
+                <br><br>
+                Try saying <em>"apply synthwave theme"</em> or select a style below:<br>
+                🌌 <a href="#" class="ai-theme-link" data-theme="nebula" style="color: var(--color-cyan); text-decoration: underline;">Nebula</a> |
+                🌆 <a href="#" class="ai-theme-link" data-theme="synthwave" style="color: var(--color-cyan); text-decoration: underline;">Synthwave</a> |
+                💻 <a href="#" class="ai-theme-link" data-theme="matrix" style="color: var(--color-cyan); text-decoration: underline;">Matrix</a> |
+                📐 <a href="#" class="ai-theme-link" data-theme="blueprint" style="color: var(--color-cyan); text-decoration: underline;">Blueprint</a>
+              </div>
+            </div>
+            
+            <div class="ai-voice-bar">
+              <button class="ai-mic-btn" id="voiceCommandBtn" title="Click to speak command (e.g. 'draw shape', 'write note space')">🎤</button>
+              <div class="ai-listening-indicator" id="aiVoiceIndicator" style="display:none;">
+                <span class="pulse-ring"></span>
+                <small id="voiceSpeechText">Listening for space commands...</small>
+              </div>
+            </div>
+            
+            <div class="ai-actions-grid">
+              <button class="button ai-btn" id="aiSummarizeBtn">Summarize Notes</button>
+              <button class="button ai-btn" id="aiBrainstormBtn">Brainstorm Ideas</button>
+              <button class="button ai-btn" id="aiTidyBtn">Auto-Tidy Grid</button>
+            </div>
+          </section>
+
+          <section class="export-card">
+            <span class="export-spark">✦</span>
+            <div>
+              <strong>Export & Backups</strong>
+              <p>Export a snapshot image or backup this board to JSON.</p>
+              <div class="export-actions">
+                <button id="exportBtn">Export PNG <span>↓</span></button>
+                <button id="exportJsonBtn" class="secondary" title="Export JSON backup">JSON <span>↓</span></button>
+                <button id="importJsonBtn" class="secondary" title="Import JSON board">JSON <span>↑</span></button>
+              </div>
+              <input type="file" id="importJsonFile" accept=".json" style="display:none;" />
+            </div>
+          </section>
+        </aside>
+      </section>
+    </main>
+
+    <!-- Glass Command Palette Modal -->
+    <div id="commandPalette" class="modal-overlay">
+      <div class="modal-content">
+        <div class="command-input-container">
+          <span>⚡</span>
+          <input type="text" id="commandInput" placeholder="Type a command (e.g., 'pen', 'export', 'board')..." autocomplete="off" />
+        </div>
+        <div class="command-results" id="commandResults">
+          <!-- Dynamic Results -->
+        </div>
+      </div>
+    </div>
+
+    <div id="toast" class="toast" role="status"></div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
